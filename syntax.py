@@ -1,26 +1,45 @@
 import string
+from collections import defaultdict
 
 # SYNTAX SETTINGS
-WHITE_CHARS         = list(string.whitespace)
+PRECEDENCES                     = defaultdict(lambda: 0)
 
-IDENTIFIERS         = list(string.ascii_letters + string.digits)
+WHITE_CHARS                     = list(string.whitespace)
 
-OPENING_BRACKET     = '('
-CLOSING_BRACKET     = ')'
-BRACKETS            = [OPENING_BRACKET, CLOSING_BRACKET]
+IDENTIFIERS                     = list(string.ascii_letters + string.digits)
 
-AND_OPERATOR        = '&'
-OR_OPERATOR         = '|'
-XOR_OPERATOR        = '^'
-NOT_OPERATOR        = '~'
-IMPL_OPERATOR       = '>'
-XNOR_OPERATOR       = '='
-SINGLE_OPERATORS    = [NOT_OPERATOR]
-DOUBLE_OPERATORS    = [AND_OPERATOR, OR_OPERATOR, XOR_OPERATOR, IMPL_OPERATOR, XOR_OPERATOR]
-OPERATORS           = SINGLE_OPERATORS + DOUBLE_OPERATORS
+OPENING_BRACKET                 = '('
+PRECEDENCES[OPENING_BRACKET]    = 10
 
-TRUE_CONSTANT       = '1'
-FALSE_CONSTANT      = '0'
-CONSTANTS           = [TRUE_CONSTANT, FALSE_CONSTANT]
+CLOSING_BRACKET                 = ')'
+PRECEDENCES[CLOSING_BRACKET]    = 10
 
-VALID_CHARS         = WHITE_CHARS + IDENTIFIERS + BRACKETS + OPERATORS + CONSTANTS
+BRACKETS                        = [OPENING_BRACKET, CLOSING_BRACKET]
+
+AND_OPERATOR                    = '&'
+PRECEDENCES[AND_OPERATOR]       = 4
+
+OR_OPERATOR                     = '|'
+PRECEDENCES[OR_OPERATOR]        = 3
+
+XOR_OPERATOR                    = '^'
+PRECEDENCES[XOR_OPERATOR]       = 5
+
+NOT_OPERATOR                    = '~'
+PRECEDENCES[NOT_OPERATOR]       = 6
+
+IMPL_OPERATOR                   = '>'
+PRECEDENCES[IMPL_OPERATOR]      = 2
+
+XNOR_OPERATOR                   = '='
+PRECEDENCES[XNOR_OPERATOR]      = 1
+
+SINGLE_OPERATORS                = [NOT_OPERATOR]
+DOUBLE_OPERATORS                = [AND_OPERATOR, OR_OPERATOR, XOR_OPERATOR, IMPL_OPERATOR, XOR_OPERATOR]
+OPERATORS                       = SINGLE_OPERATORS + DOUBLE_OPERATORS
+
+TRUE_CONSTANT                   = '1'
+FALSE_CONSTANT                  = '0'
+CONSTANTS                       = [TRUE_CONSTANT, FALSE_CONSTANT]
+
+VALID_CHARS                     = WHITE_CHARS + IDENTIFIERS + BRACKETS + OPERATORS + CONSTANTS
