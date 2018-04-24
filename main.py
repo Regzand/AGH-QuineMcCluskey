@@ -87,3 +87,39 @@ def check_syntax(tokens: List[Token]):
     if indent is not 0:
         raise SyntaxException(tokens[-1].position + len(tokens[-1]), "Missing closing bracket")
 
+
+def to_rpn(tokens: List[Token]) -> List[Token]:
+
+    queue = []
+    stack = []
+
+    for tok in tokens:
+
+        # any variable or constant -> to queue
+        if tok.type in [TokenType.IDENTIFIER, TokenType.CONSTANT]:
+            queue.append(tok)
+
+        # opening racket -> to stack
+        elif tok.type is TokenType.OPENING_BRACKET:
+            stack.append(tok)
+
+        # closing bracket -> move form stack to queue
+        elif tok.type is TokenType.CLOSING_BRACKET:
+            while stack[-1].type is not TokenType.OPENING_BRACKET:
+                queue.append(stack.pop())
+            stack.pop()
+
+        # operators -> complicated
+        elif tok.type in [TokenType.DOUBLE_OPERATOR, TokenType.SINGLE_OPERATOR]:
+            while len(stack) > 0 and stack[-1].type is not TokenType.OPENING_BRACKET and (syntax.PRECEDENCES[stack[-1]] > syntax.PRECEDENCES[tok] or (syntax.PRECEDENCES[stack[-1]] == syntax.PRECEDENCES[tok] and stack[-1].type is TokenType.SINGLE_OPERATOR)):
+                queue.append(stack.pop())
+            stack.append(tok)
+
+        # other -> error
+        else:
+            raise SyntaxException(tok.position, "Unexpected token '" + tok + "'")
+
+    while len(stack) > 0:
+        queue.append(stack.pop())
+
+    return queue
