@@ -87,6 +87,9 @@ def check_syntax(tokens: List[Token]):
     if indent is not 0:
         raise SyntaxException(tokens[-1].position + len(tokens[-1]), "Missing closing bracket")
 
+    if state != 2:
+        raise SyntaxException(tokens[-1].position + len(tokens[-1]), "Unexpected end of statement")
+
 
 def to_rpn(tokens: List[Token]) -> List[Token]:
 
