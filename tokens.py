@@ -1,7 +1,19 @@
 from enum import Enum
 from typing import List
+from collections import defaultdict
 import math
 import string
+
+"""Precedences of operators"""
+PRECEDENCES = defaultdict(lambda: 0)
+PRECEDENCES['('] = 10
+PRECEDENCES[')'] = 10
+PRECEDENCES['~'] = 6
+PRECEDENCES['^'] = 5
+PRECEDENCES['&'] = 4
+PRECEDENCES['|'] = 3
+PRECEDENCES['>'] = 2
+PRECEDENCES['='] = 1
 
 
 class TokenType(Enum):
@@ -31,6 +43,10 @@ class Token(str):
         super().__init__()
         self.position = position
         self.type = type
+
+    @property
+    def precedence(self):
+        return PRECEDENCES[self]
 
 
 def get_token(exp: str) -> Token:
