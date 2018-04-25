@@ -19,4 +19,4 @@ class SyntaxException(Exception):
         self.msg = msg
 
     def __str__(self):
-        return "Syntax error at position" + str(self.token.position) + " (" + self.token + "): " + self.msg
+        return "Syntax error at position " + str(self.token.position) + " ('" + self.token + "'): " + self.msg
