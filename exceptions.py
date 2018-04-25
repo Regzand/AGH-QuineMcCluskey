@@ -1,3 +1,5 @@
+from tokens import Token
+
 
 class MissingVariableException(Exception):
 
@@ -10,9 +12,9 @@ class MissingVariableException(Exception):
 
 class SyntaxException(Exception):
 
-    def __init__(self, position: int, msg: str):
-        self.position = position
+    def __init__(self, token: Token, msg: str):
+        self.token = token
         self.msg = msg
 
     def __str__(self):
-        return "Syntax error at " + str(self.position) + ": " + self.msg
+        return "Syntax error at position" + str(self.token.position) + " (" + self.token + "): " + self.msg
