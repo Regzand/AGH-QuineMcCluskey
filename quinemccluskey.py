@@ -1,17 +1,21 @@
-from typing import List
+from typing import List, Dict
 
 from tokens import Token, TokenType
-from exceptions import SyntaxException
+from exceptions import SyntaxException, MissingVariableException
+
+# type aliases
+Expression = List[Token]
+TestCase = Dict[str, bool]
 
 
-def check_syntax(tokens: List[Token]):
+def check_syntax(exp: Expression):
     """Checks syntax of given expression and throws SyntaxExceptions if needed"""
 
     indent = 0
     state = 1
 
     # for every token
-    for tok in tokens:
+    for tok in exp:
 
         # skips whitespaces
         if tok.type is TokenType.WHITESPACE:
@@ -61,20 +65,20 @@ def check_syntax(tokens: List[Token]):
 
     # checks final indentation
     if indent != 0:
-        raise SyntaxException(tokens[-1], "Missing closing bracket")
+        raise SyntaxException(exp[-1], "Missing closing bracket")
 
     # checks final state
     if state != 2:
-        raise SyntaxException(tokens[-1], "Unexpected end of statement")
+        raise SyntaxException(exp[-1], "Unexpected end of statement")
 
 
-def to_rpn(tokens: List[Token]) -> List[Token]:
+def to_rpn(exp: Expression) -> Expression:
     """Parses expression to rpn format"""
 
     queue = []
     stack = []
 
-    for tok in tokens:
+    for tok in exp:
 
         # skips whitespaces
         if tok.type is TokenType.WHITESPACE:
@@ -113,3 +117,92 @@ def to_rpn(tokens: List[Token]) -> List[Token]:
 
     # return queue - expression in rpn format
     return queue
+
+
+def get_variables(exp: Expression) -> Expression:
+    """Returns all variables present in expression, sorted, without duplicates"""
+    return sorted(set([tok for tok in exp if tok.type is TokenType.IDENTIFIER]))
+
+
+def get_test_case(vars: List[str], ite: int) -> TestCase:
+    return {vars[i]: ((ite >> i) % 2 > 0) for i in range(len(vars))}
+
+
+def evaluate(exp: Expression, variables: TestCase) -> bool:
+
+    stack = []
+
+    for tok in exp:
+
+        if tok.type is TokenType.CONSTANT:
+            stack.append(tok == '1')
+            continue
+
+        if tok.type is TokenType.IDENTIFIER:
+            if tok not in variables:
+                raise MissingVariableException(tok)
+            stack.append(variables[tok])
+            continue
+
+        if tok.type in [TokenType.SINGLE_OPERATOR, TokenType.DOUBLE_OPERATOR]:
+
+            if tok == '~':
+                stack = stack[:-1] + [ not stack[-1] ]
+                continue
+
+            if tok == '|':
+                stack = stack[:-2] + [ stack[-2] or stack[-1] ]
+                continue
+
+            if tok == '&':
+                stack = stack[:-2] + [ stack[-2] and stack[-1] ]
+                continue
+
+            if tok == '=':
+                stack = stack[:-2] + [ stack[-2] == stack[-1] ]
+                continue
+
+            if tok == '^':
+                stack = stack[:-2] + [ stack[-2] != stack[-1] ]
+                continue
+
+            if tok == '>':
+                stack = stack[:-2] + [ (not stack[-2]) or stack[-1] ]
+                continue
+
+        raise SyntaxError(tok, "Unexpected token in RPN format")
+
+    return stack[0]
+
+
+def get_minterms(exp: Expression, vars: List[str]) -> List[int]:
+    return [i for i in range(1 << len(vars)) if evaluate(exp, get_test_case(vars, i))]
+
+
+def simplify(expression: Expression) -> Expression:
+
+    # parse to rpn
+    expression = to_rpn(expression)
+
+    # get variables
+    variables = get_variables(expression)
+
+    # if there is no variables nothing to simplify
+    if len(variables) == 0:
+        if evaluate(expression, {}):
+            return [Token('1', TokenType.CONSTANT)]
+        else:
+            return [Token('0', TokenType.CONSTANT)]
+
+    # get all minterms
+    minterms = get_minterms(expression, variables)
+
+    # if there are not minterms its always false
+    if len(minterms) == 0:
+        return [Token('0', TokenType.CONSTANT)]
+
+    # if there is as many minterms as test cases its always true
+    if len(minterms) == (1 << len(variables)):
+        return [Token('1', TokenType.CONSTANT)]
+
+    # TODO: main minimalization
