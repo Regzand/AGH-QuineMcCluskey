@@ -72,7 +72,7 @@ def check_syntax(exp: Expression):
         raise SyntaxException(exp[-1], "Unexpected end of statement")
 
 
-def to_rpn(exp: Expression) -> Expression:
+def _to_rpn(exp: Expression) -> Expression:
     """Parses expression to rpn format"""
 
     queue = []
@@ -119,16 +119,18 @@ def to_rpn(exp: Expression) -> Expression:
     return queue
 
 
-def get_variables(exp: Expression) -> Expression:
+def _get_variables(exp: Expression) -> Expression:
     """Returns all variables present in expression, sorted, without duplicates"""
     return sorted(set([tok for tok in exp if tok.type is TokenType.IDENTIFIER]))
 
 
-def get_test_case(vars: List[str], ite: int) -> TestCase:
+def _get_test_case(vars: List[str], ite: int) -> TestCase:
+    """Returns test case for given variables, where values are calculated from given iterator"""
     return {vars[i]: ((ite >> i) % 2 > 0) for i in range(len(vars))}
 
 
-def evaluate(exp: Expression, variables: TestCase) -> bool:
+def _evaluate(exp: Expression, variables: TestCase) -> bool:
+    """Evaluates expression with given test case"""
 
     stack = []
 
@@ -175,27 +177,29 @@ def evaluate(exp: Expression, variables: TestCase) -> bool:
     return stack[0]
 
 
-def get_minterms(exp: Expression, vars: List[str]) -> List[int]:
-    return [i for i in range(1 << len(vars)) if evaluate(exp, get_test_case(vars, i))]
+def _get_minterms(exp: Expression, vars: List[str]) -> List[int]:
+    """Returns all minterms from expression with given variables"""
+    return [i for i in range(1 << len(vars)) if _evaluate(exp, _get_test_case(vars, i))]
 
 
 def simplify(expression: Expression) -> Expression:
+    """Returns simplified expression, input expression should be in normal (not rpn) format"""
 
     # parse to rpn
-    expression = to_rpn(expression)
+    expression = _to_rpn(expression)
 
     # get variables
-    variables = get_variables(expression)
+    variables = _get_variables(expression)
 
     # if there is no variables nothing to simplify
     if len(variables) == 0:
-        if evaluate(expression, {}):
+        if _evaluate(expression, {}):
             return [Token('1', TokenType.CONSTANT)]
         else:
             return [Token('0', TokenType.CONSTANT)]
 
     # get all minterms
-    minterms = get_minterms(expression, variables)
+    minterms = _get_minterms(expression, variables)
 
     # if there are not minterms its always false
     if len(minterms) == 0:

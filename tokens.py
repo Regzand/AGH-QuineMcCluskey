@@ -49,7 +49,7 @@ class Token(str):
         return PRECEDENCES[self]
 
 
-def get_token(exp: str) -> Token:
+def _get_token(exp: str) -> Token:
     """Returns first token present in given expression"""
 
     length = 0
@@ -67,7 +67,7 @@ def tokenize(exp: str) -> List[Token]:
     tokens = []
     i = 0
     while i < len(exp):
-        tokens.append(get_token(exp[i:]))
+        tokens.append(_get_token(exp[i:]))
         tokens[-1].position = i
         i += len(tokens[-1])
     return tokens
