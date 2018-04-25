@@ -36,10 +36,10 @@ class TokenType(Enum):
 class Token(str):
     """Extension of string that adds token type and position parameters"""
 
-    def __new__(cls, value: str, type: TokenType, position: int = 0):
+    def __new__(cls, value: str, type: TokenType, position: int = None):
         return super(Token, cls).__new__(cls, value)
 
-    def __init__(self, value:str, type: TokenType, position: int = 0):
+    def __init__(self, value:str, type: TokenType, position: int = None):
         super().__init__()
         self.position = position
         self.type = type
