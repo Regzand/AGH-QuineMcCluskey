@@ -5,6 +5,8 @@ import string
 
 
 class TokenType(Enum):
+    """Enumeration of possible token types with their specification - possible chars and max length of token"""
+
     OPENING_BRACKET = (1,           "(")
     CLOSING_BRACKET = (1,           ")")
     SINGLE_OPERATOR = (1,           "~")
@@ -20,6 +22,7 @@ class TokenType(Enum):
 
 
 class Token(str):
+    """Extension of string that adds token type and position parameters"""
 
     def __new__(cls, value: str, type: TokenType, position: int = 0):
         return super(Token, cls).__new__(cls, value)
@@ -31,6 +34,8 @@ class Token(str):
 
 
 def get_token(exp: str) -> Token:
+    """Returns first token present in given expression"""
+
     length = 0
     for type in TokenType:
         while length < len(exp) and length < type.max_length and exp[length] in type.chars:
@@ -41,6 +46,8 @@ def get_token(exp: str) -> Token:
 
 
 def tokenize(exp: str) -> List[Token]:
+    """Returns list of tokens present in given expression"""
+
     tokens = []
     i = 0
     while i < len(exp):

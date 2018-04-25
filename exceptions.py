@@ -2,6 +2,7 @@ from tokens import Token
 
 
 class MissingVariableException(Exception):
+    """Exception used when during expression evaluation there is missing variable in provided list of variables"""
 
     def __init__(self, variable_name: str):
         self.variable_name = variable_name
@@ -11,6 +12,7 @@ class MissingVariableException(Exception):
 
 
 class SyntaxException(Exception):
+    """Exception used in case of some sort of syntax error related to token"""
 
     def __init__(self, token: Token, msg: str):
         self.token = token
