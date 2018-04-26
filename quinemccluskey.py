@@ -1,4 +1,6 @@
-from typing import List, Dict
+from itertools import combinations
+from functools import reduce
+from typing import List, Dict, Tuple, Set, Optional
 
 from tokens import Token, TokenType
 from exceptions import SyntaxException, MissingVariableException
@@ -6,6 +8,7 @@ from exceptions import SyntaxException, MissingVariableException
 # type aliases
 Expression = List[Token]
 TestCase = Dict[str, bool]
+Implicant = Tuple[Set[int], str]
 
 
 def check_syntax(exp: Expression):
@@ -182,6 +185,90 @@ def _get_minterms(exp: Expression, vars: List[str]) -> List[int]:
     return [i for i in range(1 << len(vars)) if _evaluate(exp, _get_test_case(vars, i))]
 
 
+def _get_bitmask(ite: int, size: int) -> str:
+    return bin(ite)[2:].rjust(size,'0')
+
+
+def _get_difference(mask1: str, mask2: str) -> int:
+    return len([True for b1, b2 in zip(mask1, mask2) if b1 != b2])
+
+
+def _merge_bitmasks(mask1: str, mask2: str) -> str:
+    mask = ""
+    for b1, b2 in zip(mask1, mask2):
+        mask += ('-' if b1 != b2 else b1)
+    return mask
+
+
+def _merge_implicants(imp1: Implicant, imp2: Implicant) -> Implicant:
+    return imp1[0] | imp2[0], _merge_bitmasks(imp1[1], imp2[1])
+
+
+def _get_implicants(minterms: List[int], size: int) -> List[Implicant]:
+    return [({m}, _get_bitmask(m, size)) for m in minterms]
+
+
+def _get_prime_implicants(implicants: List[Implicant]) -> List[Implicant]:
+
+    prime = []
+
+    while True:
+        used = set()
+        created = []
+
+        # merge all possible implicants
+        for imp1, imp2 in combinations(implicants, 2):
+
+            if _get_difference(imp1[1], imp2[1]) != 1:
+                continue
+
+            created.append(_merge_implicants(imp1, imp2))
+            used.add(imp1[1])
+            used.add(imp2[1])
+
+        # add all not used implicants are prime
+        for imp in implicants:
+            if imp[1] not in used:
+                prime.append(imp)
+
+        if len(created) == 0:
+            break
+
+        implicants = created
+
+    return prime
+
+
+def _get_smallest_prime_set(implicants: List[Implicant], minterms: List[int]) -> Optional[List[Implicant]]:
+    for i in range(1, 1 + len(minterms)):
+        for prime_set in combinations(implicants, i):
+
+            # merge
+            prime_minterms = set()
+            for mins, _ in prime_set:
+                prime_minterms = prime_minterms.union(mins)
+
+            if all(p in prime_minterms for p in minterms):
+                return prime_set
+    return None
+
+
+def _get_single_expression(impl: Implicant, variables: List[str]) -> Expression:
+    exp = []
+    for i in range(len(impl[1])):
+        if impl[1][i] == '0':
+            exp.append(Token('~', TokenType.SINGLE_OPERATOR))
+        if impl[1][i] in '01':
+            exp.append(Token(variables[i], TokenType.IDENTIFIER))
+    return exp
+
+
+def _get_expression(implicants: List[Implicant], variables: List[str]) -> Expression:
+    return reduce(lambda a, b: a + [Token('|', TokenType.DOUBLE_OPERATOR)] + b, [_get_single_expression(impl, variables) for impl in implicants])
+
+
+
+
 def simplify(expression: Expression) -> Expression:
     """Returns simplified expression, input expression should be in normal (not rpn) format"""
 
@@ -209,4 +296,16 @@ def simplify(expression: Expression) -> Expression:
     if len(minterms) == (1 << len(variables)):
         return [Token('1', TokenType.CONSTANT)]
 
-    # TODO: main minimalization
+    # get implicants
+    implicants = _get_implicants(minterms, len(variables))
+
+    # get prime implicants
+    implicants = _get_prime_implicants(implicants)
+
+    # get prime set
+    implicants = _get_smallest_prime_set(implicants, minterms)
+
+    # return expression
+    return _get_expression(implicants, variables)
+
+
